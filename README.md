@@ -50,3 +50,6 @@ set time field order
 
 set to send log tcp/udp
 `python LogGen.py -s <tcp|udp> -di <destIP> -dp <destPort>`
+
+set sleep time(Logs will be sent or stored every <sleep_time> seconds)   
+`python LogGen.py -slp <sleep_time>`
