@@ -5,7 +5,7 @@
 # Notice : Use at your own risk!
 #
 # Latest update : 2022.04.13
-# Version : 1.0.3
+# Version : 1.0.4
 
 import io, os
 import time
@@ -30,7 +30,7 @@ def convertLog(log_format, log_dict):
     elif log_format == 'json':
         message=str(log_dict)
     # print(' : ' + message)
-    print( message)
+    # print( message)
     return message
 
 
