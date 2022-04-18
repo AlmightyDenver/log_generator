@@ -33,20 +33,20 @@ Generated Log Sample : Sample Log fiels
 ## Usage
 
 default : save log as csv 
-  `python logGen.py`
+`python logGen.py`
 
 set log file directory
-  `python logGen.py -p <my/log/path>`
+`python logGen.py -p <my/log/path>`
 
 set log format
-  `python logGen.py -l <csv|xml|txt|json>`
+`python logGen.py -l <csv|xml|txt|json>`
 
 set time field format
-1 - %Y-%m-%d %H:%M, 2 - %Y/%m/%d %H:%M:%S
-	`python logGen.py -tf <1|2>`
+(option : 1 - %Y-%m-%d %H:%M, 2 - %Y/%m/%d %H:%M:%S)
+`python logGen.py -tf <1|2>`
 
 set time field order
-	`python LogGen.py -t <0|1|...|7>`
+`python LogGen.py -t <0|1|...|7>`
 
 set to send log tcp/udp
-  `python LogGen.py -s <tcp|udp> -di <destIP> -dp <destPort>`
+`python LogGen.py -s <tcp|udp> -di <destIP> -dp <destPort>`
