@@ -2,24 +2,23 @@
 
 # [Log Generator]
 # Author : DenverAlmighty
-# Notice : Use at your own risk!
-#
 # Latest update : 2022.04.18
-# Version : 0.5.1
+# Version : 0.5.3
 
-import io, os
+import os
 import time
-import csv, json
+import csv
+import json
 import datetime
 import random
+import argparse
+import socket
 from faker import Faker
 from dicttoxml import dicttoxml
-import argparse
 import numpy
-import socket
 
-
-def log_gen(time_loc,log_format,time_format, send_type):
+# Create dictionary type log
+def log_gen(time_loc, log_format, time_format, send_type):
     # create empty dictionary
     mylog = {}
 
@@ -34,15 +33,16 @@ def log_gen(time_loc,log_format,time_format, send_type):
 
     # make random data using random
     log_format = [log_format][0]
-    response=['200','404','500','301']
-    verb=['GET','POST','DELETE','PUT']
-    resources=['/list','/wp-content','/wp-admin','/explore','/search/tag/list','/app/main/posts','/posts/posts/explore','/apps/cart.jsp?appID=']
+    response=['200', '404', '500', '301']
+    verb=['GET', 'POST', 'DELETE', 'PUT']
+    resources=['/list', '/wp-content', '/wp-admin', '/explore', '/search/tag/list', '/app/main/posts',\
+        '/posts/posts/explore', '/apps/cart.jsp?appID=']
     uri = random.choice(resources)
     if uri.find('apps')>0:
-        uri += str(random.randint(1000,10000))
-    resp = numpy.random.choice(response,p=[0.9,0.04,0.02,0.04])
-    byt = int(random.gauss(5000,50))
-    useragent = numpy.random.choice(ualist,p=[0.5,0.3,0.1,0.05,0.05] )()
+        uri += str(random.randint(1000, 10000))
+    resp = numpy.random.choice(response,p=[0.9, 0.04, 0.02, 0.04])
+    byt = int(random.gauss(5000, 50))
+    useragent = numpy.random.choice(ualist,p=[0.5, 0.3, 0.1, 0.05, 0.05])()
     # Create events with more than 10000 characters
     if (send_type == 'none' and  numpy.random.choice([0,1], p=[0.95, 0.05])):
         tenth = 'LOG_TEST message 10000 ABCDEFGHIJKLMNOPQRSTUBWXYZ ' * 200
@@ -60,11 +60,12 @@ def log_gen(time_loc,log_format,time_format, send_type):
             mylog[field_list[i]] = locals()[field_list[i]]
     # add datetime field at last
     if time_loc==-1:
-            mylog['datetime'] = time
+        mylog['datetime'] = time
     # print(mylog)
 
     return mylog
 
+# Convert log format as string
 def convert_log(log_format, log_dict):
     message = ''
     if log_format == 'csv':
@@ -78,7 +79,41 @@ def convert_log(log_format, log_dict):
     # print( message)
     return message
 
-def send_log(type, dest_ip, dest_port, log_format, my_log):
+# Save Log
+def save_log(log_format, filename, mylog):
+    if log_format == 'csv':
+        # header list
+        header_list=list(mylog.keys())
+        # if file not exist, create new file and save header before save row
+        if os.path.isfile(filename):
+            with open(filename, 'a', newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, fieldnames=header_list)
+                writer.writerow(mylog)
+        # if file already exist, save only row not header.
+        else:
+            with open(filename, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, fieldnames=header_list)
+                writer.writeheader()
+                writer.writerow(mylog)
+    # Save as JSON
+    elif log_format == 'json':
+        with open(filename, 'a+') as f:
+            json.dump(mylog, f)
+    # Save as TXT
+    elif log_format == 'txt':
+        mylog=str(mylog).strip('{|}') + '\n'
+        with open(filename, 'a+') as f:
+            f.write(mylog)
+    # Save as XML
+    elif log_format == 'xml':
+        mylog=dicttoxml(mylog).decode()
+        with open(filename, 'a+') as f:
+            f.write(mylog)
+            f.write('\n')
+
+
+# Send Log 
+def send_log(type, dest_ip, dest_port, log_format, mylog):
     # init socket
     sock = None
     # Set timeout
@@ -86,7 +121,7 @@ def send_log(type, dest_ip, dest_port, log_format, my_log):
     # Set dest address
     addr = (dest_ip, dest_port)
     # Message to send
-    message = convert_log(log_format, my_log).encode()
+    message = convert_log(log_format, mylog).encode()
 
     if type=='tcp':
         # create socket ?
@@ -104,18 +139,18 @@ def send_log(type, dest_ip, dest_port, log_format, my_log):
     # Close socket
     sock.close()
 
-
-
 def main():
     #argparse
     print('===== Log Generator Started =====')
     parser = argparse.ArgumentParser(description='Random Log Generator', add_help=True)
     parser.add_argument('--log_path', '-p', dest='log_path', help='default : ./', default='')
-    parser.add_argument('--log_format', '-l', dest='log_format', help='Select log format', choices=['csv','json', 'txt', 'xml'], default='csv' )
-    parser.add_argument('--time_format', '-tf', dest='time_format', help='Set time format 1 : %%Y-%%m-%%d %%H:%%M, 2 : %%Y/%%m/%%d %%H:%%M:%%S\n', choices=[1, 2], default=1, type=int )
-    parser.add_argument('--time_location', '-t', dest='time_location', help='Setting the location of datetime(0~7).-1 : the end of row', default=0, type=int)
-    parser.add_argument('--send_type', '-s', dest='send_type', help='Send Log', choices=['none','tcp', 'udp'], default='none' )
-    parser.add_argument('--dest_ip', '-di', dest='dest_ip', help='Dest IP', default='172.20.1.35' )
+    parser.add_argument('--log_format', '-l', dest='log_format', help='Select log format', choices=['csv','json', 'txt', 'xml'], default='csv')
+    parser.add_argument('--time_format', '-tf', dest='time_format', help='Set time format 1 : %%Y-%%m-%%d %%H:%%M, \
+        2 : %%Y/%%m/%%d %%H:%%M:%%S\n', choices=[1, 2], default=1, type=int)
+    parser.add_argument('--time_location', '-t', dest='time_location', help='Setting the location of datetime(0~7). \
+        -1 : the end of row', default=0, type=int)
+    parser.add_argument('--send_type', '-s', dest='send_type', help='Send Log', choices=['none','tcp', 'udp'], default='none')
+    parser.add_argument('--dest_ip', '-di', dest='dest_ip', help='Dest IP', default='172.20.1.35')
     parser.add_argument('--dest_port', '-dp', dest='dest_port', help='Dest PORT', default='10514', type=int)
     parser.add_argument('--sleep', '-slp', dest='sleep_time', help = 'Sleep time', default=5, type=int)
     args = parser.parse_args()
@@ -129,46 +164,19 @@ def main():
     time_format = '%Y-%m-%d %H:%M:%S' if args.time_format == 1 else '%Y/%m/%d %H:%M:%S'
     sleep_time = args.sleep_time
 
-
     while True:
         # execute log_gen function
         mylog = log_gen(time_loc,log_format,time_format, send_type)
         # set file path + file name
         filename = log_path + datetime.datetime.today().strftime('%Y-%m-%d') + '_Log_Generator.' + log_format
-        # print(filename)
 
         # Save as file
         if send_type == 'none':
-            if log_format == 'csv':
-                # header list
-                header_list=list(mylog.keys())
-                if os.path.isfile(filename):
-                    with open(filename, 'a', newline='', encoding='utf-8') as f:
-                        writer = csv.DictWriter(f, fieldnames=header_list)
-                        writer.writerow(mylog)
-                else:
-                    with open(filename, 'w', newline='', encoding='utf-8') as f:
-                        writer = csv.DictWriter(f, fieldnames=header_list)
-                        writer.writeheader()
-                        writer.writerow(mylog)
-            # Save as JSON
-            elif log_format == 'json':
-                with open(filename, 'a+') as f:
-                    json.dump(mylog, f)
-            # Save as TXT
-            elif log_format == 'txt':
-                mylog=str(mylog).strip('{|}') + '\n'
-                with open(filename, 'a+') as f:
-                    f.write(mylog)
-            # Save as XML
-            elif log_format == 'xml':
-                mylog=dicttoxml(mylog).decode()
-                with open(filename, 'a+') as f:
-                    f.write(mylog)
-                    f.write('\n')
+            save_log(log_format, filename, mylog)
+            
         # if send_type == tcp OR udp, Send log
         else:
-            send_log(send_type, dest_ip, dest_port, log_format, my_log)
+            send_log(send_type, dest_ip, dest_port, log_format, mylog)
 
         # Sleep
         time.sleep(sleep_time)
