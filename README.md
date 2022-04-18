@@ -7,7 +7,7 @@
 I made this programme because I needed sample log when testing data collection.
 
 ### The Details
-Optionally, can select log file type,  time field location, time field format, and the log directory. (See Usage below)
+Optionally, can select whether send or save log, log file type,  time field location, time field format, and the log directory. (See Usage below)
 
 "<Date>_Log_Generator.<log_format>" The log file is created in this format. 1 log occurs every second. If you want to modify file name, generation cycle, you need to edit code.
 
@@ -32,6 +32,9 @@ Generated Log Sample : Sample Log fiels
   
 ## Usage
 
+default : save log as csv 
+  `python logGen.py`
+
 set log file directory
   `python logGen.py -p <my/log/path>`
 
@@ -43,5 +46,7 @@ set time field format
 	`python logGen.py -tf <1|2>`
 
 set time field order
-	`python Log Gen.py -t <0|1|...|7>``
+	`python LogGen.py -t <0|1|...|7>`
 
+set to send log tcp/udp
+  `python LogGen.py -s <tcp|udp> -di <destIP> -dp <destPort>`
